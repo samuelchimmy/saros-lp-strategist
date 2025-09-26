@@ -11,17 +11,3 @@ export const getPriceFromId = (
     const price = Math.pow(base, exponent) * decimalPow;
     return price;
 }
-EOF```
-
-**7. `src/utils/token.ts`**
-```bash
-cat << 'EOF' > src/utils/token.ts
-export const calculateTokenAmount = (
-  amount: string | number | bigint,
-  decimals: number
-): number => {
-  if (typeof amount === 'undefined' || typeof decimals === 'undefined') {
-    return 0;
-  }
-  return Number(amount) / Math.pow(10, decimals);
-};
