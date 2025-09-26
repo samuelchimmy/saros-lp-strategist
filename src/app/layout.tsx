@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
-// THE FIX IS ON THIS LINE: We are importing globals.css with an absolute path alias.
 import "@/app/globals.css";
 import { WalletContextProvider } from "@/contexts/WalletContextProvider";
+import { ThemeProvider } from "@/components/ThemeProvider";
 
 export const metadata: Metadata = {
   title: "Saros LP Strategist",
@@ -10,9 +10,16 @@ export const metadata: Metadata = {
 
 export default function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
   return (
-    <html lang="en">
+    <html lang="en" suppressHydrationWarning>
       <body>
-        <WalletContextProvider>{children}</WalletContextProvider>
+        <ThemeProvider
+          attribute="class"
+          defaultTheme="dark"
+          enableSystem
+          disableTransitionOnChange
+        >
+          <WalletContextProvider>{children}</WalletContextProvider>
+        </ThemeProvider>
       </body>
     </html>
   );
