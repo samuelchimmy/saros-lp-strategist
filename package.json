@@ -33,14 +33,3 @@
     "typescript": "^5"
   }
 }
-EOF```
-
-**2. `next.config.mjs`**
-```bash
-cat << 'EOF' > next.config.mjs
-/** @type {import('next').NextConfig} */
-const nextConfig = {
-  transpilePackages: ['@saros-finance/dlmm-sdk'],
-};
-
-export default nextConfig;
