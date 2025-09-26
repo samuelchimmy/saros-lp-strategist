@@ -1,10 +1,12 @@
 'use client';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Cell } from 'recharts';
 import { fetchPoolData, PoolData } from '@/services/sarosService';
 import { getPriceFromId } from "@/utils/price";
 import { calculateTokenAmount } from '@/utils/token';
 import WalletConnectButton from '@/components/WalletConnectButton';
+import { ModeToggle } from '@/components/ThemeToggle';
+import { useTheme } from 'next-themes';
 
 type ChartData = { name: string; price: number; liquidity: number; };
 
@@ -14,6 +16,16 @@ export default function HomePage() {
     const [chartData, setChartData] = useState<ChartData[]>([]);
     const [isLoading, setIsLoading] = useState(false);
     const [error, setError] = useState<string | null>(null);
+    const { theme } = useTheme();
+    const [chartColors, setChartColors] = useState({ grid: '#4A5568', tick: '#A0AEC0', activeBin: '#F59E0B', bin: '#22D3EE' });
+
+    useEffect(() => {
+        if (theme === 'dark') {
+            setChartColors({ grid: '#4A5568', tick: '#A0AEC0', activeBin: '#F59E0B', bin: '#22D3EE' });
+        } else {
+            setChartColors({ grid: '#CBD5E0', tick: '#4A5568', activeBin: '#22D3EE', bin: '#F59E0B' });
+        }
+    }, [theme]);
 
     const handleFetchData = async () => {
         setIsLoading(true); setError(null); setPoolData(null); setChartData([]);
@@ -42,31 +54,37 @@ export default function HomePage() {
 
     const CustomTooltip = ({ active, payload, label }: any) => {
       if (active && payload?.length) {
-        return <div className="p-3 bg-gray-800 border-gray-600 rounded text-white text-sm"><p>{`Bin ID: ${label}`}</p><p>{`Price: $${payload[0].payload.price.toFixed(6)}`}</p><p>{`Liquidity: $${payload[0].value.toLocaleString()}`}</p></div>;
+        return <div className="p-3 bg-card border rounded text-card-foreground text-sm"><p>{`Bin ID: ${label}`}</p><p>{`Price: $${payload[0].payload.price.toFixed(6)}`}</p><p>{`Liquidity: $${payload[0].value.toLocaleString()}`}</p></div>;
       } return null;
     };
 
     return (
-        <main className="flex min-h-screen flex-col items-center p-4 md:p-12 bg-gray-900 text-white font-sans">
+        <main className="flex min-h-screen flex-col items-center p-4 md:p-12 font-sans">
             <div className="w-full max-w-7xl">
-                <header className="flex justify-between items-center mb-8 gap-4"><h1 className="text-4xl font-bold">Saros LP Strategist</h1><WalletConnectButton /></header>
-                <section className="bg-gray-800 p-4 rounded-lg flex flex-col sm:flex-row gap-4 items-center">
+                <header className="flex justify-between items-center mb-8 gap-4">
+                    <h1 className="text-4xl font-bold">Saros LP Strategist</h1>
+                    <div className="flex gap-4 items-center">
+                        <WalletConnectButton />
+                        <ModeToggle />
+                    </div>
+                </header>
+                <section className="bg-card p-4 rounded-lg flex flex-col sm:flex-row gap-4 items-center">
                     <label className="font-semibold">Pool Address (Devnet):</label>
-                    <input value={poolAddress} onChange={(e) => setPoolAddress(e.target.value)} className="flex-grow w-full bg-gray-700 p-2 rounded border-gray-600" />
-                    <button onClick={handleFetchData} disabled={isLoading} className="w-full sm:w-auto bg-cyan-600 hover:bg-cyan-700 disabled:bg-gray-500 p-2 px-6 rounded">{isLoading ? 'Loading...' : 'Analyze'}</button>
+                    <input value={poolAddress} onChange={(e) => setPoolAddress(e.target.value)} className="flex-grow w-full bg-background p-2 rounded border-input border" />
+                    <button onClick={handleFetchData} disabled={isLoading} className="w-full sm:w-auto bg-primary text-primary-foreground hover:bg-primary/90 disabled:opacity-50 p-2 px-6 rounded">{isLoading ? 'Loading...' : 'Analyze'}</button>
                 </section>
-                {error && <div className="mt-4 text-red-400 p-3 rounded">{error}</div>}
-                <section className="mt-8 bg-gray-800 p-4 rounded-lg min-h-[500px] flex items-center justify-center">
+                {error && <div className="mt-4 text-destructive p-3 rounded">{error}</div>}
+                <section className="mt-8 bg-card p-4 rounded-lg min-h-[500px] flex items-center justify-center">
                     {isLoading ? <p>Fetching data...</p> : !poolData || chartData.length === 0 ? <p>Enter a pool address to analyze.</p> :
                      (<div className="w-full">
-                           <div className='mb-4 text-center'><h2 className="text-2xl font-semibold">Live Liquidity Distribution</h2><p className="text-gray-400">Current Price: ~${poolData.price.toFixed(4)} | Active Bin: {poolData.activeBin}</p></div>
+                           <div className='mb-4 text-center'><h2 className="text-2xl font-semibold">Live Liquidity Distribution</h2><p className="text-muted-foreground">Current Price: ~${poolData.price.toFixed(4)} | Active Bin: {poolData.activeBin}</p></div>
                             <ResponsiveContainer width="100%" height={450}>
                                 <BarChart data={chartData}>
-                                    <CartesianGrid strokeDasharray="3 3" stroke="#4A5568" />
-                                    <XAxis dataKey="name" tick={{ fill: '#A0AEC0' }} />
-                                    <YAxis tickFormatter={(val) => `$${Number(val).toLocaleString()}`} tick={{ fill: '#A0AEC0' }} />
+                                    <CartesianGrid strokeDasharray="3 3" stroke={chartColors.grid} />
+                                    <XAxis dataKey="name" tick={{ fill: chartColors.tick }} />
+                                    <YAxis tickFormatter={(val) => `$${Number(val).toLocaleString()}`} tick={{ fill: chartColors.tick }} />
                                     <Tooltip content={<CustomTooltip />} />
-                                    <Bar dataKey="liquidity">{chartData.map(e => (<Cell key={e.name} fill={parseInt(e.name) === poolData.activeBin ? '#F59E0B' : '#22D3EE'} />))}</Bar>
+                                    <Bar dataKey="liquidity">{chartData.map(e => (<Cell key={e.name} fill={parseInt(e.name) === poolData.activeBin ? chartColors.activeBin : chartColors.bin} />))}</Bar>
                                 </BarChart>
                             </ResponsiveContainer>
                         </div>)}
