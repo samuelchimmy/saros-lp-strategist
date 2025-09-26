@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
-import "./globals.css";
+// THE FIX IS ON THIS LINE: We are importing globals.css with an absolute path alias.
+import "@/app/globals.css";
 import { WalletContextProvider } from "@/contexts/WalletContextProvider";
 
 export const metadata: Metadata = {
